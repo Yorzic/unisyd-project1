@@ -1,0 +1,65 @@
+---
+- name: ELK-Stack
+  hosts: elk
+  become: true
+  vars_files:
+    - ./vars/elk-vars.yml
+
+  tasks:
+
+  - name: Update apt
+    apt:
+      upgrade: yes
+      update_cache: yes
+      cache_valid_time: 86400 #One day
+
+  - name: Install aptitude using apt
+    apt: name=aptitude state=latest update_cache=yes force_apt_get=yes
+
+  - name: Install required system packages
+    apt: name={{ item }} state=latest update_cache=yes
+    loop: [ 'apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common', 'python3-pip', 'virtualenv', 'python3-setuptools']
+
+  - name: Add Docker GPG apt Key
+    apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      state: present
+
+  - name: Add Docker Repository
+    apt_repository:
+      repo: deb https://download.docker.com/linux/ubuntu bionic stable
+      state: present
+
+  - name: Update apt and install docker-ce
+    apt: update_cache=yes name=docker-ce state=latest
+
+  - name: Install Docker Module for Python
+    pip:
+      name: docker
+
+  - name: Pull default Docker image
+    docker_image:
+      name: "{{ default_container_image }}"
+      source: pull
+
+  # Creates the number of containers defined by the variable create_containers, using values from vars file
+  - name: Create default containers
+    docker_container:
+      name: elk
+      image: "{{ default_container_image }}"
+      command: "{{ default_container_command }}"
+      state: present
+      restart_policy: always
+      published_ports:
+        - "5601:5601"
+        - "9200:9200"
+        - "5044:5044"
+    with_sequence: count={{ create_containers }}
+
+  # Use command module
+  - name: Increase virtual memory
+    command: sysctl -w vm.max_map_count=262144
+
+  # Use sysctl module
+  - name: Use more memory
+    command: systemctl set-property docker.service MemoryMax=4G

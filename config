@@ -1,0 +1,11 @@
+Host JumpBox
+Hostname 3.141.178.61 
+User ubuntu
+IdentityFile ~/.ssh/jumpbox.pem
+
+Host ELK    
+Hostname 3.13.129.92 
+User ubuntu
+IdentityFile ~/.ssh/ELK-Stack.pem
+ServerAliveInterval 120
+TCPKeepAlive no

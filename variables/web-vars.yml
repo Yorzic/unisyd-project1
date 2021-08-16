@@ -1,0 +1,4 @@
+create_containers: 1
+default_container_name: docker
+default_container_image: cyberxsecurity/dvwa
+default_container_command: echo Bootcamp team is epic!
